@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Nilai Akhir</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <h1>Prediksi Nilai Akhir Siswa</h1>
+    <form id="predictionForm">
+        <div class="form-group">
+            <label for="age">Umur (15-22):</label>
+            <input type="number" id="age" name="age" min="15" max="22" required>
+        </div>
+        <div class="form-group">
+            <label for="famsize">Ukuran Keluarga (1 untuk GT3, 0 untuk LE3):</label>
+            <input type="number" id="famsize" name="famsize" min="0" max="1" required>
+        </div>
+        <div class="form-group">
+            <label for="traveltime">Waktu Perjalanan ke Sekolah (1-4):</label>
+            <input type="number" id="traveltime" name="traveltime" min="1" max="4" required>
+        </div>
+        <div class="form-group">
+            <label for="failures">Jumlah Kegagalan Sebelumnya (0-4):</label>
+            <input type="number" id="failures" name="failures" min="0" max="4" required>
+        </div>
+        <div class="form-group">
+            <label for="schoolsup">Dukungan Sekolah (1 untuk Ya, 0 untuk Tidak):</label>
+            <input type="number" id="schoolsup" name="schoolsup" min="0" max="1" required>
+        </div>
+        <div class="form-group">
+            <label for="higher">Keinginan Pendidikan Tinggi (1 untuk Ya, 0 untuk Tidak):</label>
+            <input type="number" id="higher" name="higher" min="0" max="1" required>
+        </div>        
+        <div class="form-group">
+            <label for="studytime">Waktu Belajar (1-4):</label>
+            <input type="number" id="studytime" name="studytime" min="1" max="4" required>
+        </div>
+        <div class="form-group">
+            <label for="absences">Jumlah Ketidakhadiran (0-93):</label>
+            <input type="number" id="absences" name="absences" min="0" max="93" required>
+        </div>
+        <div class="form-group">
+            <label for="G1">Nilai G1 (0-20):</label>
+            <input type="number" id="G1" name="G1" min="0" max="20" required>
+        </div>
+        <div class="form-group">
+            <label for="G2">Nilai G2 (0-20):</label>
+            <input type="number" id="G2" name="G2" min="0" max="20" required>
+        </div>
+        <button type="submit">Prediksi</button>
+    </form>
+
+    <div id="popup">
+        <div class="popup-content">
+            <span id="closePopup" class="close">&times;</span>
+            <h2>Hasil Prediksi</h2>
+            <p id="predictionResult">Hasil prediksi Anda akan muncul di sini.</p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById("predictionForm");
+        const popup = document.getElementById("popup");
+        const closePopup = document.getElementById("closePopup");
+        const predictionResult = document.getElementById("predictionResult");
+
+        form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const studytime = document.getElementById("studytime").value;
+    const absences = document.getElementById("absences").value;
+    const G1 = document.getElementById("G1").value;
+    const G2 = document.getElementById("G2").value;
+    const age = document.getElementById("age").value;
+    const famsize = document.getElementById("famsize").value;
+    const traveltime = document.getElementById("traveltime").value;
+    const failures = document.getElementById("failures").value;
+    const schoolsup = document.getElementById("schoolsup").value;
+    const higher = document.getElementById("higher").value;
+
+    try {
+        const response = await fetch("/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                studytime: parseInt(studytime),
+                absences: parseInt(absences),
+                G1: parseInt(G1),
+                G2: parseInt(G2),
+                age: parseInt(age),           // Perbaikan di sini
+                famsize: parseInt(famsize),
+                traveltime: parseInt(traveltime),
+                failures: parseInt(failures),
+                schoolsup: parseInt(schoolsup),
+                higher: parseInt(higher)
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.regression !== undefined) {
+            predictionResult.innerHTML = `
+                <p><strong>Prediksi Nilai Akhir (G3):</strong> ${data.regression.toFixed(2)}</p>
+                <p><strong>Hasil Prediksi:</strong> ${data.classification}</p>
+                <p><strong>Probabilitas Kelulusan:</strong> ${data.probability}%</p>
+            `;
+        } else {
+            predictionResult.textContent = `Error: ${data.error}`;
+        }
+
+        // Menampilkan pop-up dengan hasil
+        popup.style.display = "block";
+    } catch (error) {
+        predictionResult.textContent = "Gagal memuat data. Silakan coba lagi.";
+        popup.style.display = "block";
+    }
+});
+
+        closePopup.addEventListener("click", () => {
+            popup.style.display = "none";
+        });
+
+        window.addEventListener("click", (e) => {
+            if (e.target === popup) {
+                popup.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
